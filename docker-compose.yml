@@ -24,22 +24,22 @@ services:
       - postgrest-backend
     restart: always
 
-  ##################
-  # postgrest-demo #
-  ##################
-  postgrest-demo:
-    container_name: postgrest-demo
-    image: nginx:mainline-alpine
-    ports:
-      - "80:80"
-    volumes:
-      # anything in html directory is hosted via nginx
-      - "./html:/usr/share/nginx/html"
-    restart: always
-
   #############
   # postgrest #
   #############
+  fastapi:
+    networks:
+      - postgrest-backend
+    depends_on:
+      - postgrest
+    build:
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - 8060:80
+    volumes:
+      - ./app:/app
+    command: /start-reload.sh
   postgrest:
     container_name: postgrest
     image: postgrest/postgrest:latest
