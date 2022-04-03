@@ -30,10 +30,12 @@ RUN apt-get update -y --fix-missing
 RUN apt-get install -y curl
 
 RUN apt-get install -y ruby ruby-dev rubygems build-essential libssl-dev pkg-config git
+RUN  apt-get install -y libclang-dev flex zlib1g zlib1g-dev \
+    pkg-config make libssl-dev libreadline-dev postgresql-server-dev-12
 RUN gem install --no-document fpm
 
-#RUN chmod -R 777 /usr/local/lib/postgresql/ 
-#RUN chmod -R 777 /usr/local/share/postgresql/extension
+RUN chmod -R 777 /usr/lib/postgresql/ 
+RUN chmod -R 777 /usr/share/postgresql/extension
 
 USER ${UID}:${GID}
 WORKDIR /home/${USER}
@@ -43,11 +45,6 @@ ENV PATH="/home/${USER}/.cargo/bin:${PATH}"
 RUN cargo install cargo-pgx
 RUN cargo pgx init \
 	--pg12=$(which pg_config)
-
-USER root
-RUN  apt-get install -y libclang-dev flex zlib1g zlib1g-dev \
-    pkg-config make libssl-dev libreadline-dev
-USER ${UID}:${GID}
 
 RUN git clone https://github.com/zombodb/zombodb && cd zombodb && cargo pgx install --release
 
