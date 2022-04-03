@@ -1,0 +1,53 @@
+#
+# Copyright 2018-2022 ZomboDB, LLC
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+#
+FROM ubuntu/postgres:12-20.04_beta   	
+
+
+LABEL maintainer="ZomboDB, LLC (zombodb@gmail.com)"
+
+ARG USER=docker
+ARG UID=1000
+ARG GID=1000
+
+
+RUN useradd -m ${USER} --uid=${UID}
+
+RUN apt update
+RUN apt-get update -y --fix-missing
+RUN apt-get install -y curl
+
+RUN apt-get install -y ruby ruby-dev rubygems build-essential libssl-dev pkg-config git
+RUN gem install --no-document fpm
+
+#RUN chmod -R 777 /usr/local/lib/postgresql/ 
+#RUN chmod -R 777 /usr/local/share/postgresql/extension
+
+USER ${UID}:${GID}
+WORKDIR /home/${USER}
+RUN curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | bash -s -- -y
+ENV PATH="/home/${USER}/.cargo/bin:${PATH}"
+
+RUN cargo install cargo-pgx
+RUN cargo pgx init \
+	--pg12=$(which pg_config)
+
+USER root
+RUN  apt-get install -y libclang-dev flex zlib1g zlib1g-dev \
+    pkg-config make libssl-dev libreadline-dev
+USER ${UID}:${GID}
+
+RUN git clone https://github.com/zombodb/zombodb && cd zombodb && cargo pgx install --release
+
